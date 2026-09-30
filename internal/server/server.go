@@ -25,6 +25,7 @@ import (
 	"homeguard/internal/config"
 	"homeguard/internal/desktop"
 	"homeguard/internal/guard"
+	"homeguard/internal/mihomo"
 )
 
 //go:embed web
@@ -75,6 +76,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /browser", s.browserPage(files))
 	mux.HandleFunc("POST /browser/report", s.browserReport)
 	mux.HandleFunc("POST /api/clash/test", s.testClash)
+	mux.HandleFunc("GET /api/clash/diagnose", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, mihomo.Diagnose(r.Context()))
+	})
 	mux.HandleFunc("GET /api/clash-script", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"script": clashscript.Template})
 	})

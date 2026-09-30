@@ -145,6 +145,64 @@ func Discover(ctx context.Context) (Found, bool) {
 	return Found{}, false
 }
 
+/** Attempt：诊断时一个候选的结果 */
+type Attempt struct {
+	Controller string `json:"controller"`
+	Source     string `json:"source"`
+	HasSecret  bool   `json:"hasSecret"`
+	Result     string `json:"result"`
+	OK         bool   `json:"ok"`
+}
+
+/** Diagnosis：诊断结果，供界面展示，帮助定位找不到 Clash 的原因 */
+type Diagnosis struct {
+	Attempts []Attempt `json:"attempts"`
+	Cores    []string  `json:"cores"`
+	Sockets  []string  `json:"sockets"`
+}
+
+/** Diagnose：试连全部候选并记录每一个的结果，同时列出运行中的内核与临时目录里的套接字 */
+func Diagnose(ctx context.Context) Diagnosis {
+	var d Diagnosis
+	seen := map[string]bool{}
+	for _, c := range candidates() {
+		key := c.controller + "\x00" + c.secret
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		a := Attempt{Controller: c.controller, Source: c.source, HasSecret: c.secret != ""}
+		if p, ok := strings.CutPrefix(c.controller, "unix:"); ok {
+			if _, err := os.Stat(p); err != nil {
+				a.Result = "文件不存在"
+				d.Attempts = append(d.Attempts, a)
+				continue
+			}
+		}
+		tctx, cancel := context.WithTimeout(ctx, 800*time.Millisecond)
+		v, err := New(c.controller, c.secret).Version(tctx)
+		cancel()
+		if err == nil {
+			a.OK, a.Result = true, "可用 · "+v
+		} else {
+			a.Result = err.Error()
+		}
+		d.Attempts = append(d.Attempts, a)
+	}
+	// 运行中的内核：只看程序名是 Clash 内核的进程，不列其他命令（其他命令的参数里可能有密钥）
+	if runtime.GOOS != "windows" {
+		if out, err := exec.Command("/bin/ps", "-axww", "-o", "user=,command=").Output(); err == nil {
+			for _, line := range strings.Split(string(out), "\n") {
+				if isCore(line) {
+					d.Cores = append(d.Cores, strings.TrimSpace(line))
+				}
+			}
+		}
+	}
+	d.Sockets = clashSockets()
+	return d
+}
+
 /** isCore：命令行的程序名是 mihomo / clash 内核（参数里提到 clash 的其他命令不算） */
 func isCore(line string) bool {
 	exe := line

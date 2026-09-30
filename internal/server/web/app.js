@@ -399,7 +399,8 @@
         '<div class="pd-field"><label>密钥（没有可留空）</label><input class="pd-input" id="secret" type="password" value="' + esc(c.secret) + '"></div>' +
         '<div class="pd-field"><label>住宅出口分组名</label><input class="pd-input" id="group" value="' + esc(c.residentialGroup) + '"></div></div>' +
         '<div class="pd-setting"><div class="pd-setting-text pd-setting-desc">Clash Verge 默认是 unix:/tmp/verge/verge-mihomo.sock；也可以填 http://127.0.0.1:9097 这类地址。住宅出口分组里的单个代理都算住宅代理（类型不限），分组、直连不算。</div></div></div>' +
-        '<div class="pd-savebar"><button class="pd-btn" data-act="test-clash">测试连接</button><button class="pd-btn pd-btn-primary" data-act="save-clash">保存</button></div>';
+        '<div class="pd-savebar"><button class="pd-btn" data-act="diagnose">' + icon('search', 16) + '诊断</button><button class="pd-btn" data-act="test-clash">测试连接</button><button class="pd-btn pd-btn-primary" data-act="save-clash">保存</button></div>' +
+        '<div id="diag"></div>';
     } else {
       body = '<div class="pd-card"><dl class="pd-kv"><dt>版本</dt><dd>' + esc(S.version) + '</dd><dt>Clash</dt><dd>' + esc(S.snap.version || '未连接') + '</dd><dt>数据目录</dt><dd class="pd-path">' + esc(S.dataDir) + '</dd></dl></div>' +
         '<div class="pd-h2">退出</div><div class="pd-card">' + setting('退出守护', '关闭窗口后守护仍在后台运行；退出后不再保护，并继续被暂停的程序', '<button class="pd-btn pd-btn-danger" data-act="quit">' + icon('power', 16) + '退出守护</button>') + '</div>';
@@ -441,6 +442,19 @@
       case 'copy-script':
         (S.template ? Promise.resolve() : api('GET', '/api/clash-script').then(function (j) { S.template = j.script; }))
           .then(function () { copyText(S.template); }).catch(function (er) { toast(er.message); });
+        break;
+      case 'diagnose':
+        var box = document.getElementById('diag');
+        if (box) { box.innerHTML = '<div class="pd-empty">正在诊断…</div>'; }
+        api('GET', '/api/clash/diagnose').then(function (d) {
+          if (!box) { return; }
+          var list = function (arr, empty) { return arr && arr.length ? arr.map(function (x) { return '<div class="pd-path" style="padding:6px 16px;border-bottom:1px solid var(--pd-line)">' + esc(x) + '</div>'; }).join('') : '<div class="pd-empty">' + empty + '</div>'; };
+          box.innerHTML = '<div class="pd-h2">逐个试连的结果</div><div class="pd-card">' + (d.attempts || []).map(function (a) {
+            return '<div class="cc-check"><span class="' + (a.ok ? 'cc-ok' : 'cc-bad') + '">' + icon(a.ok ? 'circle-check' : 'circle-x', 16) + '</span><div class="cc-check-main"><div class="pd-mono" style="font-size:13px;word-break:break-all">' + esc(a.controller) + (a.hasSecret ? '（带密钥）' : '') + '</div><div class="cc-check-detail">' + esc(a.source) + ' · ' + esc(a.result) + '</div></div></div>';
+          }).join('') + '</div>' +
+            '<div class="pd-h2">运行中的 Clash 内核</div><div class="pd-card">' + list(d.cores, '没有找到运行中的 mihomo / clash 进程') + '</div>' +
+            '<div class="pd-h2">临时目录里的 Clash 套接字</div><div class="pd-card">' + list(d.sockets, '没有') + '</div>';
+        }).catch(function (er) { toast(er.message); });
         break;
       case 'test-clash':
         api('POST', '/api/clash/test', { controller: val('controller'), secret: val('secret') }).then(function (j) { toast('连接成功 · ' + j.version); }).catch(function (er) { toast(er.message); });
