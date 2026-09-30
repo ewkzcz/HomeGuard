@@ -34,6 +34,24 @@
 
 关闭窗口后守护仍在后台运行，在「设置 → 关于」里退出。
 
+### 界面
+
+**守护总览**：线路状态、出口一致性、守护条件
+
+<img src="assets/guard-overview.jpg" width="800" alt="守护总览页">
+
+**流量**：受保护程序的实时连接与出口
+
+<img src="assets/traffic-all.jpg" width="800" alt="流量页">
+
+**体检**：分组打分，含浏览器侧检测
+
+<img src="assets/check-all.jpg" width="800" alt="体检页">
+
+**分流脚本**：一键复制，显示是否已生效
+
+<img src="assets/script.jpg" width="800" alt="分流脚本页">
+
 
 
 ## 二、工作流程
@@ -82,7 +100,7 @@ flowchart LR
 
 
 
-## 四、安装、依赖和使用
+## 三、安装、依赖和使用
 
 ### 依赖环境
 
@@ -122,13 +140,13 @@ scripts/package-mac.sh --install
 
 
 
-## 五、社区友链
+## 四、社区友链
 
 [LINUX DO](https://linux.do/)：一个关注开发者、开源项目与 AI 工具交流的社区。感谢社区佬友对开源工具和 Agent 工作流的讨论与反馈。
 
 
 
-## 六、许可与致谢
+## 五、许可与致谢
 
 MIT 协议，见 [LICENSE](LICENSE)。
 
