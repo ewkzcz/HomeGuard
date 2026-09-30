@@ -507,3 +507,8 @@ select:focus, input:focus, textarea:focus { outline: none; }
 .cc-cmp-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--pd-text-3); white-space: nowrap; }
 .cc-cmp-value { margin-top: 3px; font-size: 13px; overflow-wrap: anywhere; }
 .pd-row.active .pd-avatar { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .7); }
+/* 同一页面实时刷新时不重播进场动画 */
+.cc-still .pd-page-inner { animation: none; }
+/* 连接表：收紧间距，出口名过长时省略，保证「断开」按钮完整显示 */
+.cc-table th, .cc-table td { padding-left: 10px; padding-right: 10px; }
+.cc-table .pd-tag { max-width: 140px; }

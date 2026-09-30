@@ -111,11 +111,19 @@
       '<div class="pd-rail-gap"></div>' + btn('settings', 'menu', '设置', false));
   }
 
+  // 切换页面时才播放进场动画；同一页面的实时刷新不重播，避免内容不停闪烁
+  var lastPage = '';
   function render() {
     if (!S.snap) { return; }
     shell();
     renderRail();
     var r = route();
+    var main = document.getElementById('main'), key = r.page + '/' + r.sub;
+    if (key !== lastPage) {
+      lastPage = key;
+      main.classList.remove('cc-still');
+      setTimeout(function () { main.classList.add('cc-still'); }, 300);
+    }
     var list = document.getElementById('list');
     list.classList.toggle('narrow', r.page === 'settings');
     list.style.display = r.page === 'script' ? 'none' : '';
@@ -239,7 +247,7 @@
         var ex = c.residential ? '<span class="pd-tag pd-tag-ok" title="' + esc(c.exit) + '">' + esc(c.exit) + '</span>' : '<span class="pd-tag cc-tag-bad" title="' + esc(c.exit || 'DIRECT') + '">' + esc(c.exit || 'DIRECT') + '</span>';
         return '<tr>' + (withApp ? '<td class="pd-nowrap">' + avatarInline(c) + '</td>' : '') + '<td class="cc-target">' + esc(c.target) + '</td><td>' + ex + '</td><td class="cc-rule pd-path">' + esc(c.rule) + '</td>' +
           '<td class="pd-nowrap pd-muted">↑' + fmtBytes(c.up) + ' ↓' + fmtBytes(c.down) + '</td><td class="pd-nowrap pd-muted">' + fmtAge(c.start) + '</td>' +
-          '<td><button class="pd-link pd-link-danger" data-act="close-conn" data-id="' + esc(c.id) + '">断开</button></td></tr>';
+          '<td class="pd-nowrap"><button class="pd-link pd-link-danger" data-act="close-conn" data-id="' + esc(c.id) + '">断开</button></td></tr>';
       }).join('') + '</table></div>';
   }
   function avatarInline(c) {
