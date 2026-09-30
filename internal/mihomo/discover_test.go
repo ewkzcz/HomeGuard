@@ -30,3 +30,16 @@ func TestCoreArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestIsCore(t *testing.T) {
+	for line, want := range map[string]bool{
+		"/Applications/Clash Verge.app/Contents/MacOS/verge-mihomo -d /x -f /x/c.yaml":                                               true,
+		"/Library/PrivilegedHelperTools/io.github.clash-verge-rev.clash-verge-rev.service.bundle/Contents/MacOS/clash-verge-service": true,
+		"curl -s -H X-Key: secret http://127.0.0.1/clash":                                                                            false,
+		"/usr/bin/grep -i clash": false,
+	} {
+		if isCore(line) != want {
+			t.Fatalf("%s => %v", line, !want)
+		}
+	}
+}

@@ -80,6 +80,9 @@ func fromProcesses() []candidate {
 		if !strings.Contains(low, "mihomo") && !strings.Contains(low, "clash") {
 			continue
 		}
+		if !isCore(line) {
+			continue
+		}
 		if m := coreArgsRe.FindStringSubmatch(line); m != nil {
 			list = append(list, fromConfig(strings.TrimSpace(m[1]), "运行中的内核配置 "+filepath.Base(m[1]))...)
 		}
@@ -104,6 +107,12 @@ func candidates() []candidate {
 	// 3、常见位置
 	for _, s := range []string{"/tmp/verge/verge-mihomo.sock", "/tmp/verge-mihomo.sock", "/tmp/mihomo-party.sock", "/tmp/mihomo.sock"} {
 		list = append(list, candidate{"unix:" + s, "", "常见位置"})
+	}
+	// 临时目录里其他像 mihomo 的套接字（名字不在上面的也试一下）
+	for _, s := range clashSockets() {
+		if strings.Contains(strings.ToLower(filepath.Base(s)), "mihomo") {
+			list = append(list, candidate{"unix:" + s, "", "临时目录"})
+		}
 	}
 	for _, a := range []string{"127.0.0.1:9097", "127.0.0.1:9090"} {
 		list = append(list, candidate{"http://" + a, "", "常见端口"})
@@ -134,4 +143,29 @@ func Discover(ctx context.Context) (Found, bool) {
 		}
 	}
 	return Found{}, false
+}
+
+/** isCore：命令行的程序名是 mihomo / clash 内核（参数里提到 clash 的其他命令不算） */
+func isCore(line string) bool {
+	exe := line
+	if i := strings.Index(exe, " -"); i >= 0 {
+		exe = exe[:i]
+	}
+	base := strings.ToLower(filepath.Base(strings.TrimSpace(exe)))
+	return strings.Contains(base, "mihomo") || strings.Contains(base, "clash")
+}
+
+/** clashSockets：临时目录里像 Clash 的套接字 */
+func clashSockets() []string {
+	var out []string
+	for _, pat := range []string{"/tmp/*.sock", "/tmp/*/*.sock"} {
+		m, _ := filepath.Glob(pat)
+		for _, p := range m {
+			low := strings.ToLower(p)
+			if strings.Contains(low, "mihomo") || strings.Contains(low, "clash") || strings.Contains(low, "verge") {
+				out = append(out, p)
+			}
+		}
+	}
+	return out
 }
